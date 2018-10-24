@@ -1,3 +1,9 @@
+node_modules/*
+static/*
+!static/.gitkee
+webpack-assets.json
+
+
 config.*
 !config.dev.ini.example
 *.csv

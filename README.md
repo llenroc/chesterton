@@ -12,7 +12,10 @@ Use at your own risk!!
 A delightful little trading bot for Robinhood.
 
 ## development
-@TODO
+Dev environment consists of,
+- python (install stuff in `requirements.txt` with pipenv)
+- javascript UI (install stuff in `package.json` with yarn)
+
 
 ## testing
 @TODO
