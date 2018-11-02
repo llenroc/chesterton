@@ -19,8 +19,16 @@ result = fa_client.authenticate()
 
 env = Environment(loader=FileSystemLoader('templates'))
 
-
 class BaseHandler(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+
+    def options(self):
+        self.set_status(204)
+        self.finish()
+
     def render_json(self, data):
         self.write(json.dumps(data))
         self.finish()
@@ -39,22 +47,29 @@ class MainHandler(BaseHandler):
 
 
 class GetStockHandler(BaseHandler):
-    async def get(self, symbol):
+    def get(self, symbol):
         d = fa.Stock.fetch(fa_client, symbol)
         self.render_json(d)
 
 
-class GetOptionPositionsHandler(BaseHandler):
-    async def get(self):
+class OptionPositionsHandler(BaseHandler):
+    def get(self):
         d = fa.OptionPosition.all(fa_client)
+        self.render_json(d)
+
+
+class OptionOrdersHandler(BaseHandler):
+    def get(self):
+        d = fa.OptionOrder.all(fa_client)
         self.render_json(d)
 
 
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
-        (r"/stock/([^/]+)", GetStockHandler),
-        (r"/option_positions", GetOptionPositionsHandler),
+        (r"/api/v1/stock/([^/]+)", GetStockHandler),
+        (r"/api/v1/option_positions/fetch", OptionPositionsHandler),
+        (r"/api/v1/option_orders/fetch", OptionOrdersHandler)
     ], static_path='static', debug=True)
 
 
