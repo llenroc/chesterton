@@ -1,6 +1,4 @@
-CREATE SCHEMA chesterton;
-
-CREATE TABLE chesterton.users (
+CREATE TABLE users (
     id BIGINT PRIMARY KEY,
     email TEXT NOT NULL UNIQUE
 );
