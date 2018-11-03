@@ -13,13 +13,19 @@ A delightful little trading bot for Robinhood.
 
 ## development
 Dev environment consists of,
-- python (install stuff in `requirements.txt` with pipenv)
-- javascript UI (install stuff in `package.json` with yarn)
-- postgres
+1. python (python 3.6, install pipenv, and run `pipenv install`)
+2. javascript (`cd ui && yarn install`)
+3. PostgreSQL
 
-1. Create db named `chesterton`.
-2. 
-
+  create db,
+  ```sql
+  -- in postgres console
+  create database chesterton
+  ```
+  run migrations,
+  ```bash
+  cd db && pipenv run pgmigrate -t latest migrate
+  ```
 
 ## testing
 @TODO
