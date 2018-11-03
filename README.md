@@ -15,6 +15,10 @@ A delightful little trading bot for Robinhood.
 Dev environment consists of,
 - python (install stuff in `requirements.txt` with pipenv)
 - javascript UI (install stuff in `package.json` with yarn)
+- postgres
+
+1. Create db named `chesterton`.
+2. 
 
 
 ## testing
