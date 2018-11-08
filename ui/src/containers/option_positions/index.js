@@ -4,27 +4,42 @@ import { connect } from 'react-redux'
 import {
   fetchAsync
 } from '../../modules/option_position_api'
+import _ from 'lodash'
+
+const sortByExpirationDate = (ops, field='expiration_date') => {
+  return _.orderBy(ops, field, 'asc');
+}
 
 const OptionPositionsTable = (ops) => {
   const rows = ops.map((op) =>
     <tr key={op.id}>
-      <td>{op.id}</td>
       <td>{op.chain_symbol}</td>
+      <td>{op.expiration_date}</td>
+      <td>{op.strike_price}</td>
       <td>{op.quantity}</td>
       <td>{op.type}</td>
+      <td>{op.option_type}</td>
+      <td>{op.delta}</td>
+      <td>{op.theta}</td>
+      <td>{op.gamma}</td>
+      <td>{op.vega}</td>
     </tr>
   )
-
-  console.log(ops)
 
   return (
     <table>
       <tbody>
         <tr>
-          <th>ID</th>
           <th>Symbol</th>
+          <th>Expiration Date</th>
+          <th>Strike Price</th>
           <th>Quantity</th>
           <th>Type</th>
+          <th>Option Type</th>
+          <th>Delta</th>
+          <th>Theta</th>
+          <th>Gamma</th>
+          <th>Vega</th>
         </tr>
         { rows }
       </tbody>
@@ -43,7 +58,7 @@ const OptionPositions = props => (
       </button>
     </p>
 
-    { OptionPositionsTable(props.option_positions) }
+    { OptionPositionsTable(sortByExpirationDate(props.option_positions)) }
   </div>
 )
 

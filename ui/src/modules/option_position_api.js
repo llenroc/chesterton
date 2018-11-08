@@ -32,7 +32,7 @@ export const fetchAsync = () => {
       type: FETCH_REQUESTED
     })
 
-    let url = "http://localhost:8888/api/v1/option_positions/fetch"
+    let url = "http://localhost:8888/api/v1/option_positions"
 
     return fetch(url)
       .then(

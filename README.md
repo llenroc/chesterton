@@ -43,9 +43,3 @@ Dev environment consists of,
 
 ## production
 @TODO
-
-
-## todos
-list,
-- [ ] have templates load the UI js app
-- [ ] fetch data from RH inline, don't use workers

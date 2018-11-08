@@ -83,7 +83,7 @@ class RhOptionPosition(db.Model):
 
     @classmethod
     def all_open(cls):
-        return RhOptionPosition.query.where(RhOptionPosition.quantity > 0.0).gino.all()
+        return RhOptionPosition.query.where(RhOptionPosition.quantity != 0.0).gino.all()
 
     @classmethod
     async def parse_and_save(cls, op):
@@ -162,6 +162,7 @@ class OptionPositionsFetchHandler(BaseHandler):
     async def get(self):
         ops = fa.OptionPosition.all(fa_client)
         ops = fa.OptionPosition.mergein_marketdata_list(fa_client, ops)
+        ops = fa.OptionPosition.humanize_numbers(ops)
         ops = fa.OptionPosition.mergein_instrumentdata_list(fa_client,ops)
 
         [await RhOptionPosition.parse_and_save(op) for op in ops]
