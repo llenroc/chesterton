@@ -1,5 +1,5 @@
 CREATE TABLE option_groupings (
-    cid BIGINT PRIMARY KEY,
+    cid SERIAL PRIMARY KEY,
     name VARCHAR(255)
 );
 

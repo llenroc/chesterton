@@ -1,5 +1,5 @@
 CREATE TABLE rh_option_orders (
-    cid BIGINT PRIMARY KEY,
+    cid SERIAL PRIMARY KEY,
     id VARCHAR(36),
     chain_id VARCHAR(36),
     chain_symbol VARCHAR(20),
@@ -15,7 +15,8 @@ CREATE TABLE rh_option_orders (
     price NUMERIC(8,4),
     leg VARCHAR(20),
     opening_strategy VARCHAR(20),
-    closing_strategy VARCHAR(20)
+    closing_strategy VARCHAR(20),
+    UNIQUE(id)
 );
 
 INSERT INTO ops (op) VALUES ('migration V0001__initial_schema_chesterton.sql');

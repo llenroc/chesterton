@@ -11,6 +11,8 @@ import json
 from jinja2 import Environment, FileSystemLoader
 import fast_arrow as fa
 
+import datetime
+
 
 import configparser
 config_file = "config.dev.ini"
@@ -30,6 +32,82 @@ class User(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email = db.Column(db.Unicode(), nullable=False)
+
+class RhOptionPosition(db.Model):
+    __tablename__ = 'rh_option_positions'
+
+    cid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    id = db.Column(db.String())
+    chain_id = db.Column(db.String())
+    option = db.Column(db.String())
+    url = db.Column(db.String())
+    average_price = db.Column(db.Numeric(8,2))
+    trade_value_multiplier = db.Column(db.Numeric(8,2))
+    chain_symbol = db.Column(db.String())
+    strike_price = db.Column(db.Numeric(10,4))
+    expiration_date = db.Column(db.Date())
+    type = db.Column(db.String())
+    option_type = db.Column(db.String())
+    quantity = db.Column(db.Numeric(8,2))
+    delta = db.Column(db.Numeric(8,4))
+    theta = db.Column(db.Numeric(8,4))
+    gamma = db.Column(db.Numeric(8,4))
+    vega = db.Column(db.Numeric(8,4))
+    data = db.Column(db.JSON())
+
+    @classmethod
+    def gen_ads(cls, array):
+        result = []
+        for e in array:
+            d = dict(
+                cid=e.cid,
+                id=e.id,
+                chain_id=e.chain_id,
+                option=e.option,
+                url=e.url,
+                average_price=str(e.average_price),
+                trade_value_multiplier=str(e.trade_value_multiplier),
+                chain_symbol=e.chain_symbol,
+                strike_price=str(e.strike_price),
+                expiration_date=datetime.datetime.strftime(e.expiration_date, "%Y-%m-%d"),
+                type=e.type,
+                option_type=e.option_type,
+                quantity=str(e.quantity),
+                delta=str(e.delta), theta=str(e.theta), gamma=str(e.gamma), vega=str(e.vega))
+            result.append(d)
+        return result
+
+    @classmethod
+    def find_existing(cls, id):
+        return RhOptionPosition.query.where(RhOptionPosition.id == id).gino.all()
+
+    @classmethod
+    def all_open(cls):
+        return RhOptionPosition.query.where(RhOptionPosition.quantity > 0.0).gino.all()
+
+    @classmethod
+    async def parse_and_save(cls, op):
+        existing = await cls.find_existing(op["id"])
+        if len(existing) > 0:
+            return None
+        x = RhOptionPosition()
+        x.id = op["id"]
+        x.chain_id = op["chain_id"]
+        x.option = op["option"]
+        x.url = op["url"]
+        x.average_price = op["average_price"]
+        x.trade_value_multiplier = op["trade_value_multiplier"]
+        x.chain_symbol = op["chain_symbol"]
+        x.strike_price = op["strike_price"]
+        x.expiration_date = datetime.datetime.strptime(op["expiration_date"], "%Y-%m-%d")
+        x.type = op["type"]
+        x.option_type = op["option_type"]
+        x.quantity = op["quantity"]
+        x.delta = op["delta"]
+        x.theta = op["theta"]
+        x.gamma = op["gamma"]
+        x.vega  = op["vega"]
+        await x.create()
 
 
 class BaseHandler(GinoRequestHandler):
@@ -74,30 +152,27 @@ class GetUser(GinoRequestHandler):
         self.write(f'Hi, {user.email}!')
 
 
-class GetStockHandler(BaseHandler):
-    def get(self, symbol):
-        d = fa.Stock.fetch(fa_client, symbol)
-        self.render_json(d)
-
-
 class OptionPositionsHandler(BaseHandler):
-    def get(self):
-        d = fa.OptionPosition.all(fa_client)
-        self.render_json(d)
+    async def get(self):
+        ops = await RhOptionPosition.all_open()
+        ads = RhOptionPosition.gen_ads(ops)
+        self.render_json(ads)
 
+class OptionPositionsFetchHandler(BaseHandler):
+    async def get(self):
+        ops = fa.OptionPosition.all(fa_client)
+        ops = fa.OptionPosition.mergein_marketdata_list(fa_client, ops)
+        ops = fa.OptionPosition.mergein_instrumentdata_list(fa_client,ops)
 
-class OptionOrdersHandler(BaseHandler):
-    def get(self):
-        d = fa.OptionOrder.all(fa_client)
-        self.render_json(d)
+        [await RhOptionPosition.parse_and_save(op) for op in ops]
+
+        self.render_json({"success": True})
 
 
 def make_app():
     return Application([
-            # tornado.web.URLSpec(r"/", MainHandler),
-            # tornado.web.URLSpec(r"/api/v1/stock/([^/]+)", GetStockHandler),
-            # tornado.web.URLSpec(r"/api/v1/option_positions/fetch", OptionPositionsHandler),
-            # tornado.web.URLSpec(r"/api/v1/option_orders/fetch", OptionOrdersHandler)
+            tornado.web.URLSpec(r"/api/v1/option_positions/fetch", OptionPositionsFetchHandler),
+            tornado.web.URLSpec(r"/api/v1/option_positions", OptionPositionsHandler),
             tornado.web.URLSpec(r'/', AllUsers, name='index'),
             tornado.web.URLSpec(r'/user/(?P<uid>[0-9]+)', GetUser, name='user')
         ],
@@ -106,18 +181,7 @@ def make_app():
 
 
 if __name__ == "__main__":
-    # try:
-    #     fn = 'webpack-assets.json'
-    #     with open(fn) as f:
-    #         watch(fn)
-    #         assets = json.load(f)
-    # except IOError:
-    #     pass
-    # except KeyError:
-    #     pass
-    # define('ASSETS', assets)
-
-    # python server.py --db_user=weston --db_database=chesterton_prod
+    # pipenv run python server.py --db_user=weston --db_database=chesterton
 
     tornado.options.parse_command_line()
     tornado.ioloop.IOLoop.configure('tornado.platform.asyncio.AsyncIOMainLoop')

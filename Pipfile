@@ -6,12 +6,13 @@ name = "pypi"
 [packages]
 yandex-pgmigrate = "*"
 gino = "*"
-fast-arrow = "*"
+fast-arrow = {editable = true, path = "./../fast_arrow"}
 tornado = "*"
 "jinja2" = "*"
 "psycopg2-binary" = "*"
 
 [dev-packages]
+ipdb = "*"
 
 [requires]
 python_version = "3.6"

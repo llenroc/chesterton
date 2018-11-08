@@ -1,5 +1,5 @@
 CREATE TABLE rh_option_positions (
-    cid BIGINT PRIMARY KEY,
+    cid SERIAL PRIMARY KEY,
     id VARCHAR(36),
     chain_id VARCHAR(36),
     option VARCHAR(255),
@@ -11,7 +11,9 @@ CREATE TABLE rh_option_positions (
     expiration_date DATE,
     type VARCHAR(20),
     option_type VARCHAR(20),
-    quantity NUMERIC(8,2)
+    quantity NUMERIC(8,2),
+    data JSON,
+    UNIQUE(id)
 );
 
-INSERT INTO ops (op) VALUES ('migration V0001__initial_schema_chesterton.sql');
+INSERT INTO ops (op) VALUES ('migration V0007__initial_schema_chesterton.sql');

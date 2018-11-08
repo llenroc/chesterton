@@ -19,7 +19,7 @@ A delightful little trading bot for Robinhood.
 Dev environment consists of,
 1. python (python 3.6, install pipenv, and run `pipenv install`)
 2. javascript (`cd ui && yarn install`)
-3. PostgreSQL
+3. postgresql
 
   create db,
   ```sql
@@ -27,8 +27,15 @@ Dev environment consists of,
   create database chesterton
   ```
   run migrations,
-  ```bash
+  ```sh
+  # in terminal
   cd db && pipenv run pgmigrate -t latest migrate
+  ```
+
+  start using it,
+  ```sh
+  # in terminal
+  pipenv run python server.py --db_user=weston --db_database=chesterton     
   ```
 
 ## testing
@@ -36,7 +43,6 @@ Dev environment consists of,
 
 ## production
 @TODO
-
 
 
 ## todos
