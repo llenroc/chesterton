@@ -17,10 +17,10 @@ const SummaryTable = (ops) => {
   const results = _.map(symbols, (symbol) => {
     let sops = _.filter(ops, (x) => x.chain_symbol === symbol)
 
-    let delta = sops.reduce((a, e) => {return a + parseFloat(e.delta)}, 0);
-    let theta = sops.reduce((a, e) => {return a + parseFloat(e.theta)}, 0);
-    let gamma = sops.reduce((a, e) => {return a + parseFloat(e.gamma)}, 0);
-    let vega = sops.reduce((a, e) => {return a + parseFloat(e.vega)}, 0);
+    let delta = sops.reduce((a, e) => {return a + parseFloat(e.delta)}, 0).toFixed(4);
+    let theta = sops.reduce((a, e) => {return a + parseFloat(e.theta)}, 0).toFixed(4);
+    let gamma = sops.reduce((a, e) => {return a + parseFloat(e.gamma)}, 0).toFixed(4);
+    let vega = sops.reduce((a, e) => {return a + parseFloat(e.vega)}, 0).toFixed(4);
     let quantity = sops.length
 
     return {

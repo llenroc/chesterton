@@ -158,6 +158,20 @@ class OptionPositionsHandler(BaseHandler):
         ads = RhOptionPosition.gen_ads(ops)
         self.render_json(ads)
 
+class OptionPositionsRefreshHandler(BaseHandler):
+    async def get(self):
+        ops = await RhOptionPosition.all_open()
+
+        results = []
+        for op in ops:
+            # refresh option data
+            # save to db
+            results.append(op)
+
+        ads = RhOptionPosition.gen_ads(results)
+
+        self.render_json(ads)
+
 class OptionPositionsFetchHandler(BaseHandler):
     async def get(self):
         ops = fa.OptionPosition.all(fa_client)
@@ -173,6 +187,7 @@ class OptionPositionsFetchHandler(BaseHandler):
 def make_app():
     return Application([
             tornado.web.URLSpec(r"/api/v1/option_positions/fetch", OptionPositionsFetchHandler),
+            tornado.web.URLSpec(r"/api/v1/option_positions/refresh", OptionPositionsRefreshHandler),
             tornado.web.URLSpec(r"/api/v1/option_positions", OptionPositionsHandler),
             tornado.web.URLSpec(r'/', AllUsers, name='index'),
             tornado.web.URLSpec(r'/user/(?P<uid>[0-9]+)', GetUser, name='user')
