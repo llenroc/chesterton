@@ -10,6 +10,58 @@ const sortByExpirationDate = (ops, field='expiration_date') => {
   return _.orderBy(ops, field, 'asc');
 }
 
+const SummaryTable = (ops) => {
+  const things = _.uniqBy(ops, 'chain_symbol');
+  const symbols = _.map(things, 'chain_symbol');
+
+  const results = _.map(symbols, (symbol) => {
+    let sops = _.filter(ops, (x) => x.chain_symbol === symbol)
+
+    let delta = sops.reduce((a, e) => {return a + parseFloat(e.delta)}, 0);
+    let theta = sops.reduce((a, e) => {return a + parseFloat(e.theta)}, 0);
+    let gamma = sops.reduce((a, e) => {return a + parseFloat(e.gamma)}, 0);
+    let vega = sops.reduce((a, e) => {return a + parseFloat(e.vega)}, 0);
+    let quantity = sops.length
+
+    return {
+      cid: symbol,
+      chain_symbol: symbol,
+      quantity: quantity,
+      delta: delta,
+      theta: theta,
+      vega: vega,
+      gamma: gamma
+    }
+  })
+
+  const rows = _.map(results, (r) =>
+    <tr key={r.cid}>
+      <td>{r.chain_symbol}</td>
+      <td>{r.quantity}</td>
+      <td>{r.delta}</td>
+      <td>{r.theta}</td>
+      <td>{r.gamma}</td>
+      <td>{r.vega}</td>
+    </tr>
+  )
+
+  return (
+    <table key="summary_table">
+      <tbody>
+        <tr>
+          <th>Symbol</th>
+          <th>Quantity</th>
+          <th>Delta</th>
+          <th>Theta</th>
+          <th>Gamma</th>
+          <th>Vega</th>
+        </tr>
+        { rows }
+      </tbody>
+    </table>
+  )
+}
+
 const OptionPositionsTable = (ops) => {
   const rows = ops.map((op) =>
     <tr key={op.id}>
@@ -27,7 +79,7 @@ const OptionPositionsTable = (ops) => {
   )
 
   return (
-    <table>
+    <table key="detail_table">
       <tbody>
         <tr>
           <th>Symbol</th>
@@ -57,6 +109,11 @@ const OptionPositions = props => (
         fetch Async
       </button>
     </p>
+
+    { SummaryTable(props.option_positions) }
+
+    <br/>
+    <br/>
 
     { OptionPositionsTable(sortByExpirationDate(props.option_positions)) }
   </div>
