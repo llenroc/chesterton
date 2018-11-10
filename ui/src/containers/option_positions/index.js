@@ -1,9 +1,7 @@
 import React from 'react'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
-import {
-  fetchAsync
-} from '../../modules/option_position_api'
+import { fetchAsync,refreshAsync } from '../../modules/option_position_api'
 import _ from 'lodash'
 
 const sortByExpirationDate = (ops, field='expiration_date') => {
@@ -14,13 +12,15 @@ const SummaryTable = (ops) => {
   const things = _.uniqBy(ops, 'chain_symbol');
   const symbols = _.map(things, 'chain_symbol');
 
+  const parseFloatOrZero = ((x) => isNaN(parseFloat(x)) ? 0.0 : parseFloat(x))
+
   const results = _.map(symbols, (symbol) => {
     let sops = _.filter(ops, (x) => x.chain_symbol === symbol)
 
-    let delta = sops.reduce((a, e) => {return a + parseFloat(e.delta)}, 0).toFixed(4);
-    let theta = sops.reduce((a, e) => {return a + parseFloat(e.theta)}, 0).toFixed(4);
-    let gamma = sops.reduce((a, e) => {return a + parseFloat(e.gamma)}, 0).toFixed(4);
-    let vega = sops.reduce((a, e) => {return a + parseFloat(e.vega)}, 0).toFixed(4);
+    let delta = sops.reduce((a, e) => a + parseFloatOrZero(e.delta), 0).toFixed(4)
+    let theta = sops.reduce((a, e) => a + parseFloatOrZero(e.theta), 0).toFixed(4)
+    let gamma = sops.reduce((a, e) => a + parseFloatOrZero(e.gamma), 0).toFixed(4)
+    let vega  = sops.reduce((a, e) => a + parseFloatOrZero(e.vega), 0).toFixed(4)
     let quantity = sops.length
 
     return {
@@ -108,6 +108,10 @@ const OptionPositions = props => (
       <button onClick={props.fetchAsync} disabled={props.isFetching}>
         fetch Async
       </button>
+
+      <button onClick={props.refreshAsync} disabled={props.isRefreshing}>
+        refresh Prices Async
+      </button>
     </p>
 
     { SummaryTable(props.option_positions) }
@@ -121,6 +125,7 @@ const OptionPositions = props => (
 
 const mapStateToProps = ({ option_position_api }) => ({
   isFetching: option_position_api.isFetching,
+  isRefreshing: option_position_api.isRefreshing,
   option_positions: option_position_api.option_positions
 })
 
@@ -128,6 +133,7 @@ const mapDispatchToProps = dispatch =>
   bindActionCreators(
     {
       fetchAsync,
+      refreshAsync
     },
     dispatch
   )

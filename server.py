@@ -162,14 +162,25 @@ class OptionPositionsRefreshHandler(BaseHandler):
     async def get(self):
         ops = await RhOptionPosition.all_open()
 
-        results = []
+        ops_for_market_fetch = []
         for op in ops:
-            # refresh option data
-            # save to db
-            results.append(op)
+            x = {"id": op.id, "option": op.option}
+            ops_for_market_fetch.append(x)
 
-        ads = RhOptionPosition.gen_ads(results)
+        mds = fa.OptionPosition.mergein_marketdata_list(fa_client, ops_for_market_fetch)
 
+        for md in mds:
+            selected_op = [op for op in ops if op.id == md["id"]][0]
+            updated_fields = {
+                "delta": md["delta"],
+                "theta": md["theta"],
+                "vega":  md["vega"],
+                "gamma": md["gamma"]
+            }
+            await selected_op.update(**updated_fields).apply()
+
+        ops = await RhOptionPosition.all_open()
+        ads = RhOptionPosition.gen_ads(ops)
         self.render_json(ads)
 
 class OptionPositionsFetchHandler(BaseHandler):
