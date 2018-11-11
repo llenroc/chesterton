@@ -49,7 +49,7 @@ const SummaryTable = (ops) => {
   )
 
   return (
-    <Table striped>
+    <Table striped hover>
       <tbody>
         <tr>
           <th>Symbol</th>
@@ -82,7 +82,7 @@ const OptionPositionsTable = (ops) => {
   )
 
   return (
-    <Table striped>
+    <Table striped hover>
       <tbody>
         <tr>
           <th>Symbol</th>
