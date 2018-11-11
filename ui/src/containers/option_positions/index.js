@@ -4,6 +4,9 @@ import { connect } from 'react-redux'
 import { fetchAsync,refreshAsync } from '../../modules/option_position_api'
 import _ from 'lodash'
 
+import { Button } from 'reactstrap';
+import { Table } from 'reactstrap';
+
 const sortByExpirationDate = (ops, field='expiration_date') => {
   return _.orderBy(ops, field, 'asc');
 }
@@ -46,7 +49,7 @@ const SummaryTable = (ops) => {
   )
 
   return (
-    <table key="summary_table">
+    <Table striped>
       <tbody>
         <tr>
           <th>Symbol</th>
@@ -58,7 +61,7 @@ const SummaryTable = (ops) => {
         </tr>
         { rows }
       </tbody>
-    </table>
+    </Table>
   )
 }
 
@@ -79,7 +82,7 @@ const OptionPositionsTable = (ops) => {
   )
 
   return (
-    <table key="detail_table">
+    <Table striped>
       <tbody>
         <tr>
           <th>Symbol</th>
@@ -95,7 +98,7 @@ const OptionPositionsTable = (ops) => {
         </tr>
         { rows }
       </tbody>
-    </table>
+    </Table>
   )
 }
 
@@ -105,13 +108,24 @@ const OptionPositions = props => (
     <p>Count: {props.option_positions.length}</p>
 
     <p>
-      <button onClick={props.fetchAsync} disabled={props.isFetching}>
-        fetch Async
-      </button>
+      <Button
+        size="sm"
+        color="secondary"
+        onClick={props.fetchAsync}
+        disabled={props.isFetching}>
+          fetch Async
+      </Button>
 
-      <button onClick={props.refreshAsync} disabled={props.isRefreshing}>
-        refresh Prices Async
-      </button>
+      &nbsp;
+      &nbsp;
+
+      <Button
+        size="sm"
+        color="secondary"
+        onClick={props.refreshAsync}
+        disabled={props.isRefreshing}>
+          refresh Prices Async
+      </Button>
     </p>
 
     { SummaryTable(props.option_positions) }
