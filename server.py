@@ -13,7 +13,6 @@ import fast_arrow as fa
 
 import datetime
 
-
 import configparser
 config_file = "config.dev.ini"
 config = configparser.ConfigParser()
@@ -27,13 +26,27 @@ env = Environment(loader=FileSystemLoader('templates'))
 
 db = Gino()
 
+class AbstractModel(object):
+    @classmethod
+    def gen_ads(cls, array):
+        result = []
+        for e in array:
+            result.append(e.to_dictionary())
+        return result
+
+    @classmethod
+    def find_existing(cls, id):
+        return cls.query.where(cls.id == id).gino.all()
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     email = db.Column(db.Unicode(), nullable=False)
 
-class RhOptionPosition(db.Model):
+
+class RhOptionPosition(db.Model, AbstractModel):
     __tablename__ = 'rh_option_positions'
 
     cid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
@@ -55,35 +68,30 @@ class RhOptionPosition(db.Model):
     vega = db.Column(db.Numeric(8,4))
     data = db.Column(db.JSON())
 
-    @classmethod
-    def gen_ads(cls, array):
-        result = []
-        for e in array:
-            d = dict(
-                cid=e.cid,
-                id=e.id,
-                chain_id=e.chain_id,
-                option=e.option,
-                url=e.url,
-                average_price=str(e.average_price),
-                trade_value_multiplier=str(e.trade_value_multiplier),
-                chain_symbol=e.chain_symbol,
-                strike_price=str(e.strike_price),
-                expiration_date=datetime.datetime.strftime(e.expiration_date, "%Y-%m-%d"),
-                type=e.type,
-                option_type=e.option_type,
-                quantity=str(e.quantity),
-                delta=str(e.delta), theta=str(e.theta), gamma=str(e.gamma), vega=str(e.vega))
-            result.append(d)
-        return result
-
-    @classmethod
-    def find_existing(cls, id):
-        return RhOptionPosition.query.where(RhOptionPosition.id == id).gino.all()
+    def to_dictionary(self):
+        return dict(
+            cid=self.cid,
+            id=self.id,
+            chain_id=self.chain_id,
+            option=self.option,
+            url=self.url,
+            average_price=str(self.average_price),
+            trade_value_multiplier=str(self.trade_value_multiplier),
+            chain_symbol=self.chain_symbol,
+            strike_price=str(self.strike_price),
+            expiration_date=datetime.datetime.strftime(self.expiration_date, "%Y-%m-%d"),
+            type=self.type,
+            option_type=self.option_type,
+            quantity=str(self.quantity),
+            delta=str(self.delta),
+            theta=str(self.theta),
+            gamma=str(self.gamma),
+            vega=str(self.vega)
+        )
 
     @classmethod
     def all_open(cls):
-        return RhOptionPosition.query.where(RhOptionPosition.quantity != 0.0).gino.all()
+        return cls.query.where(cls.quantity != 0.0).gino.all()
 
     @classmethod
     async def parse_and_save(cls, op):
@@ -107,6 +115,51 @@ class RhOptionPosition(db.Model):
         x.theta = op["theta"]
         x.gamma = op["gamma"]
         x.vega  = op["vega"]
+        await x.create()
+
+
+class RhOptionOrder(db.Model, AbstractModel):
+    __tablename__ = 'rh_option_orders'
+
+    cid = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    id = db.Column(db.String())
+    chain_id = db.Column(db.String())
+    chain_symbol = db.Column(db.String())
+    strike_price = db.Column(db.Numeric(10,4))
+    expiration_date = db.Column(db.Date())
+    side = db.Column(db.String())
+    option = db.Column(db.String())
+    state = db.Column(db.String())
+    direction = db.Column(db.String())
+    position_effect = db.Column(db.Numeric(8,2))
+    ratio_quantity = db.Column(db.Integer())
+    price = db.Column(db.Numeric(8,4))
+    leg = db.Column(db.String())
+    opening_strategy = db.Column(db.String())
+    closing_strategy = db.Column(db.String())
+
+    @classmethod
+    async def parse_and_save(cls, op):
+        existing = await cls.find_existing(op["id"])
+        if len(existing) > 0:
+            return None
+        x = cls()
+        x.id = op["id"]
+        x.chain_id = op["chain_id"]
+        # x.option = op["option"]
+        # x.url = op["url"]
+        # x.average_price = op["average_price"]
+        # x.trade_value_multiplier = op["trade_value_multiplier"]
+        # x.chain_symbol = op["chain_symbol"]
+        # x.strike_price = op["strike_price"]
+        # x.expiration_date = datetime.datetime.strptime(op["expiration_date"], "%Y-%m-%d")
+        # x.type = op["type"]
+        # x.option_type = op["option_type"]
+        # x.quantity = op["quantity"]
+        # x.delta = op["delta"]
+        # x.theta = op["theta"]
+        # x.gamma = op["gamma"]
+        # x.vega  = op["vega"]
         await x.create()
 
 
@@ -195,11 +248,23 @@ class OptionPositionsFetchHandler(BaseHandler):
         self.render_json({"success": True})
 
 
+class OptionOrdersFetchHander(BaseHandler):
+    async def get(self):
+        oos = fa.OptionOrder.all(fa_client)
+
+        [await RhOptionOrder.parse_and_save(oo) for oo in oos]
+
+        self.render_json({"success": True})
+
+
 def make_app():
     return Application([
+            tornado.web.URLSpec(r"/api/v1/option_orders/fetch", OptionOrdersFetchHander),
+
             tornado.web.URLSpec(r"/api/v1/option_positions/fetch", OptionPositionsFetchHandler),
             tornado.web.URLSpec(r"/api/v1/option_positions/refresh", OptionPositionsRefreshHandler),
             tornado.web.URLSpec(r"/api/v1/option_positions", OptionPositionsHandler),
+
             tornado.web.URLSpec(r'/', AllUsers, name='index'),
             tornado.web.URLSpec(r'/user/(?P<uid>[0-9]+)', GetUser, name='user')
         ],
