@@ -137,30 +137,49 @@ class RhOptionOrder(db.Model, AbstractModel):
     leg = db.Column(db.String())
     opening_strategy = db.Column(db.String())
     closing_strategy = db.Column(db.String())
+    data = db.Column(db.JSON())
 
     @classmethod
-    async def parse_and_save(cls, op):
-        existing = await cls.find_existing(op["id"])
+    async def parse_and_save(cls, xx):
+        existing = await cls.find_existing(xx["id"])
         if len(existing) > 0:
             return None
         x = cls()
-        x.id = op["id"]
-        x.chain_id = op["chain_id"]
-        # x.option = op["option"]
-        # x.url = op["url"]
-        # x.average_price = op["average_price"]
-        # x.trade_value_multiplier = op["trade_value_multiplier"]
-        # x.chain_symbol = op["chain_symbol"]
-        # x.strike_price = op["strike_price"]
-        # x.expiration_date = datetime.datetime.strptime(op["expiration_date"], "%Y-%m-%d")
-        # x.type = op["type"]
-        # x.option_type = op["option_type"]
-        # x.quantity = op["quantity"]
-        # x.delta = op["delta"]
-        # x.theta = op["theta"]
-        # x.gamma = op["gamma"]
-        # x.vega  = op["vega"]
+        x.id = xx["id"]
+        x.chain_id = xx["chain_id"]
+        x.chain_symbol == xx["chain_symbol"]
+        x.state = xx["state"]
+        x.direction = xx["direction"]
+        x.data = xx
+        x.contract_type = xx["contract_type"]
+        x.strike_price = xx["strike_price"]
+        x.expiration_date = datetime.datetime.strptime(xx["expiration_date"], "%Y-%m-%d")
+        x.side = xx["side"]
+        x.option = xx["option"]
+        x.position_effect = xx["position_effect"]
+        x.ratio_quantity = xx["ratio_quantity"]
+        x.price = xx["price"]
+        x.leg = xx["leg"]
+        x.opening_strategy = xx["opening_strategy"]
+        x.closing_strategy = xx["closing_strategy"]
         await x.create()
+
+    @classmethod
+    def all_filled(cls):
+        return cls.query.where(cls.state == "filled").gino.all()
+
+    @classmethod
+    async def parsed_unrolled_data(cls, xx):
+        # find first
+        return 0
+
+    def to_dictionary(self):
+        return dict(
+            cid = self.cid,
+            id = self.id,
+            chain_id = self.chain_id,
+            chain_symbol = self.chain_symbol
+        )
 
 
 class BaseHandler(GinoRequestHandler):
@@ -183,12 +202,10 @@ class BaseHandler(GinoRequestHandler):
         }))
         self.finish()
 
-
 class MainHandler(BaseHandler):
     def get(self):
         template = env.get_template('home/index.html')
         self.render_template(template)
-
 
 class AllUsers(BaseHandler):
     async def get(self):
@@ -198,12 +215,10 @@ class AllUsers(BaseHandler):
             email = tornado.escape.xhtml_escape(user.email)
             self.write(f'<a href="{url}">{email}</a><br/>')
 
-
 class GetUser(GinoRequestHandler):
      async def get(self, uid):
         user: User = await User.get_or_404(int(uid))
         self.write(f'Hi, {user.email}!')
-
 
 class OptionPositionsHandler(BaseHandler):
     async def get(self):
@@ -248,9 +263,16 @@ class OptionPositionsFetchHandler(BaseHandler):
         self.render_json({"success": True})
 
 
+class OptionOrdersHandler(BaseHandler):
+    async def get(self):
+        x = await RhOptionOrder.all_filled()
+        ads = RhOptionOrder.gen_ads(x)
+        self.render_json(ads)
+
 class OptionOrdersFetchHander(BaseHandler):
     async def get(self):
         oos = fa.OptionOrder.all(fa_client)
+        oos = fa.OptionOrder.unroll_option_legs(fa_client, oos[0:500])
 
         [await RhOptionOrder.parse_and_save(oo) for oo in oos]
 
@@ -260,6 +282,7 @@ class OptionOrdersFetchHander(BaseHandler):
 def make_app():
     return Application([
             tornado.web.URLSpec(r"/api/v1/option_orders/fetch", OptionOrdersFetchHander),
+            tornado.web.URLSpec(r"/api/v1/option_orders", OptionOrdersHandler),
 
             tornado.web.URLSpec(r"/api/v1/option_positions/fetch", OptionPositionsFetchHandler),
             tornado.web.URLSpec(r"/api/v1/option_positions/refresh", OptionPositionsRefreshHandler),

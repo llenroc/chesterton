@@ -1,8 +1,7 @@
 export const FETCH_REQUESTED = 'option_order_api/FETCH_REQUESTED'
 export const FETCH_PARSE = 'option_order_api/FETCH_PARSE'
-
-export const INDEX_REQUESTED = 'option_order_api/INDEX_REQUESTED'
-export const INDEX_PARSE = 'option_order_api/INDEX_PARSE'
+// export const INDEX_REQUESTED = 'option_order_api/INDEX_REQUESTED'
+// export const INDEX_PARSE = 'option_order_api/INDEX_PARSE'
 
 const initialState = {
   isFetching: false,
@@ -35,40 +34,40 @@ export const fetchAsync = () => {
       type: FETCH_REQUESTED
     })
 
-    let url = "http://localhost:8888/api/v1/option_orders/fetch"
+    let url = "http://localhost:8888/api/v1/option_orders"
 
     return fetch(url)
       .then(
         response => response.json(),
         error => console.log("An error occured ", error)
       )
-      .then(json => {
+      .then(data => {
         dispatch({
           type: FETCH_PARSE,
-          option_orders: ["hi", "there"]
+          option_orders: data
         })
       })
   }
 }
 
-export const indexAsync = () => {
-  return dispatch => {
-    dispatch({
-      type: INDEX_REQUESTED
-    })
-
-    let url = "http://localhost:8888/api/v1/option_orders"
-
-    return fetch(url)
-      .then(
-        res => res.json(),
-        error => console.log("An error occured ", error)
-      )
-      .then(json => {
-        dispatch({
-          type: INDEX_PARSE,
-          option_orders: json
-        })
-      })
-  }
-}
+// export const indexAsync = () => {
+//   return dispatch => {
+//     dispatch({
+//       type: INDEX_REQUESTED
+//     })
+//
+//     let url = "http://localhost:8888/api/v1/option_orders"
+//
+//     return fetch(url)
+//       .then(
+//         res => res.json(),
+//         error => console.log("An error occured ", error)
+//       )
+//       .then(json => {
+//         dispatch({
+//           type: INDEX_PARSE,
+//           option_orders: json
+//         })
+//       })
+//   }
+// }
